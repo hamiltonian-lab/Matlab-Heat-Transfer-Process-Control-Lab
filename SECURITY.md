@@ -8,8 +8,6 @@ This project is designed for a **trusted, isolated teaching-laboratory LAN**. It
 
 - Do **not** commit `runtime/access_codes.json`, `runtime/ACCESS_CODES_FOR_INSTRUCTOR.txt`, `runtime/inbox/`, station JSON, live data CSVs or browser heartbeats.
 - Do not publish API tokens, institutional network credentials, remote access details, students' work, personal information or actual panel wiring metadata without review.
-- Before making this repository public, confirm software rights, institutional policies, and which contributors should be credited. The repository intentionally has **no license** pending that review.
-- Plain HTTP exposes traffic to anyone able to observe that lab segment; separate VLAN/network controls are required as appropriate.
 
 ### Safety engineering requirements
 
