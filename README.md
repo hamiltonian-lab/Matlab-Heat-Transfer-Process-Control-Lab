@@ -1,6 +1,6 @@
-# Four-Station Process Control Laboratory
+# Four-Station Heat Transfer Process Control Laboratory
 
-**MATLAB PID control · thermal digital twin · Modbus TCP · industrial DAQ · browser-based engineering education**
+**MATLAB PID control · digital twin · Modbus TCP · industrial DAQ · engineering education**
 
 An experimental teaching platform that connects **four independent student browser stations** to a central MATLAB controller. Students explore a first-order thermal digital twin, compare PI/PID tuning strategies, monitor temperature measurements from analog transmitters, and after qualified commissioning run closed-loop heating experiments using industrial I/O.
 
