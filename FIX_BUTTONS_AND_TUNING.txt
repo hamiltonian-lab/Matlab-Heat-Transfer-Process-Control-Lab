@@ -1,0 +1,19 @@
+Layout fix (Nov 4, 2026)
+
+- Removed the previously requested big instruction box (still absent).
+- Enlarged the instructor controls grid row from 154 to 194 pixels.
+- Explicitly set controls grid padding and row spacing; button row is 64 pixels tall, preventing clipping.
+- Reduced the mostly empty station table area from 230 to 190 pixels.
+- All four button callbacks and controls remain unchanged.
+- Student simulation/live CSV exports, six-digit logins, time zone fix, IP, PID, Modbus commands and fault protections unchanged.
+
+MATLAB rendering has not been exercised in this environment.
+
+Tuning (shared gains for simulation/live):
+- ZN PI: Kp=0.9*tau/(K*L), Ki=Kp/(3L), Kd=0.
+- ZN PID: Kp=1.2*tau/(K*L), Ki=Kp/(2L), Kd=Kp*L/2.
+- Conservative IMC PI: lambda=max(tau/2,L); Kp=tau/(K*(lambda+L)); Ti=min(tau,4*(lambda+L)); Ki=Kp/Ti, Kd=0.
+- K = heaterGain / 100; L=max(1, deadTime).
+- Manual: keeps current gains, selects plain PID mode.
+- Fuzzy: activates 3x3 rule-based gain scheduling, retaining base gains.
+WARNING: model parameters are illustrative. ZN results may saturate immediately and should not be used to command live heating without identification, commissioning, and proper independent cutoffs.

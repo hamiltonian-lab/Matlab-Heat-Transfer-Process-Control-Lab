@@ -1,0 +1,72 @@
+LOW-VOLTAGE WIRING | ADAM-6024 + ADAM-6050 | FOUR STATIONS
+============================================================
+STOP - This sheet only describes SELV 24 VDC instrumentation / SSR CONTROL
+wiring. Heater mains circuits are intentionally excluded; have a qualified
+professional design and inspect mains wiring, protection, switching and E-stop.
+
+POWER:
+  KEYENCE MS2-H50 +24V -> fused terminal distribution ->
+     ADAM-6024 Vin
+     ADAM-6050 (R)+Vs
+     WIKA transmitter (+) of each configured 2-wire 4-20 mA unit
+     SSR control input (+) of each SSR (via fused low-voltage branch)
+  KEYENCE 0V -> distribution returns ->
+     ADAM-6024 GND (module power)
+     ADAM-6050 (B)GND (module power)
+     ADAM-6050 Iso.GND (OUTPUT SINK RETURN: per terminal diagram)
+     AI0-, AI1-, AI2-, AI3- (measurement returns, see notes)
+
+WIKA CURRENT INPUT LOOPS (for TWO-WIRE 4-20 mA TRANSMITTERS ONLY):
+          +24 V ---- WIKA L+  [WIKA L-] ---- ADAM-6024 AIx+
+             0 V -------------------------- ADAM-6024 AIx-
+          where x = 0, 1, 2, 3 (one independent transmitter per channel).
+  VERIFY YOUR WIKA VERSION: a bare 4-wire RTD cannot connect like a 2-wire
+  4-20 mA transmitter and requires an appropriate transmitter/interface.
+  Do not infer WIKA electrical functions from the cable COLORS alone.
+  Configure ADAM-6024 4-20mA input jumper to current mode AND range code 7.
+  Transmitter 0-150 C scaling in code is NOT verified for every device.
+
+SSR DC CONTROL LOOPS (for SSRs with DC 24V-compatible INPUTS):
+    +24 V (fused) ----- SSR1 INPUT +
+    SSR1 INPUT - ------ ADAM-6050 DO0      (Station 1)
+    +24 V (fused) ----- SSR2 INPUT +
+    SSR2 INPUT - ------ ADAM-6050 DO1      (Station 2)
+    +24 V (fused) ----- SSR3 INPUT +
+    SSR3 INPUT - ------ ADAM-6050 DO2      (Station 3)
+    +24 V (fused) ----- SSR4 INPUT +
+    SSR4 INPUT - ------ ADAM-6050 DO3      (Station 4)
+    ADAM-6050 Iso.GND ---- 24 VDC control supply 0 V.
+
+ADAM-6050 is an NPN open-collector SINK output, NOT a voltage source.
+Its DO output switches the SSR input negative leg to Iso.GND.
+Max per output: 0-30 VDC, 100 mA; VERIFY SSR input voltage/current with
+its actual label/datasheet. Small leakage current can matter for some loads.
+Do not connect AC mains or the heating rod directly to any ADAM terminals.
+
+NETWORK:
+  Router LAN 1 ---- Central MATLAB PC Ethernet (192.168.0.200)
+  Router LAN 2 ---- ADAM-6024 Ethernet (192.168.0.20)
+  Router LAN 3 ---- ADAM-6050 Ethernet (192.168.0.21 proposed)
+  Student PC1-4 -- 2.4/5GHz lab Wi-Fi --> Router LAN (same subnet)
+  Router WAN disconnected for this isolated initial test.
+
+POWER CHECK:
+  KEYENCE MS2-H50 is 24 VDC / 2.1 A nominal. Calculate EACH device's
+  actual current requirements, 4 transmitter loads, SSR control currents,
+  protection/fuse branches, and margin. Do not assume the power supply can
+  support added modules without checking nameplate current.
+  Do NOT supply 24V to a router that expects 12V or other voltage.
+
+CONFIGURATION / COMMISSIONING:
+  - Configure 6050 DI/DO and modbus addresses in Advantech Utility.
+  - Set communication watchdog fail-safe values FSV=OFF for DO0-DO3 and
+    verify it actually works by disconnecting network while on a low-voltage
+    indicator (with heater mains ISOLATED).
+  - Hardwire independent overtemp shutdown and heater-power disconnect;
+    an SSR may fail closed. Software cannot substitute for it.
+  - Use separate, labeled terminals, protected cabling, clear labeling,
+    and keep low-voltage wiring segregated from mains conductors.
+
+REFERENCE: Advantech ADAM-6000 Series User Manual Ed.12 (2022),
+Figure 4.12 (ADAM-6024 AI), Figure 5.2 (ADAM-6050 DO), and
+Modbus mapping appendix / Advantech I/O Module Utility.

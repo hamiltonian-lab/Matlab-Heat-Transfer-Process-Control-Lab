@@ -1,0 +1,27 @@
+UNITOPS REVISION — NOVEMBER 2026
+
+Changed:
+- Removed the fixed 600 s maximum live run duration.
+- Removed fixed simulation setpoint and PID tuning ceilings from student UI,
+  Python command validator and MATLAB command validator.
+- Added four independent instructor-editable software high-temperature trips,
+  each starting at 60 C and limited to the station's configured AI span.
+- Live start and live operation now require the setpoint below the applicable
+  station trip and a valid temperature signal.
+- Removed repeated arming confirmation modal; the instructor-only checkbox
+  and disarmed-on-start behavior are retained.
+- Changed web live-mode text to display the station-specific trip.
+
+Retained:
+- Automatic output-off requests on bad sensor status, overtemperature,
+  loss of student browser heartbeat and DAQ/control faults.
+- Stop individual station, Stop All, off-on-reconnect and default disarm.
+- 0-100% duty saturation and anti-windup, because an SSR is on/off.
+- Web station authentication and assignment isolation.
+- PWM cycle period restricted to 4-120 s for predictable physical cycling.
+
+IMPORTANT:
+- 0-150 C analog input spans in this code are PROVISIONAL. Verify the
+  actual transmitter ranges per station before enabling physical heating.
+- MATLAB and real ADAM hardware have not been tested here. Validate with
+  heater electrical power isolated; retain independent hardwired protection.

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unit Operations · MATLAB PID Lab</title><style>:root{font-family:Inter,'Segoe UI',Arial,sans-serif;color:#172640;background:#f3f6fa;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#0c2139;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:15px clamp(16px,3vw,44px);border-bottom:3px solid #c99a5b}.brand{display:flex;gap:14px;align-items:center}.brand b{display:block;font-size:16px;letter-spacing:.3px}.brand small{display:block;color:#b9c8da;margin-top:3px;font-size:11px}.logo{font-size:25px;border:1px solid #af8a58;color:#fff;border-radius:9px;padding:5px;font-weight:900}.logo span{color:#dbb889}.smalltag{color:#bed0df;font-size:12px}main{margin:24px auto;max-width:1490px;padding:0 25px}.login{max-width:450px;background:white;border:1px solid #dce4ee;padding:26px 30px 22px;border-radius:13px;margin:55px auto;box-shadow:0 15px 35px #1c324416}.login h1{font-size:24px;margin:0 0 12px}.login p{color:#617189;line-height:1.6;font-size:13px}label{display:block;font-weight:600;color:#42536b;font-size:12px;margin-top:13px}input,select{display:block;width:100%;border:1px solid #ccd7e5;border-radius:7px;padding:10px 11px;font-size:14px;margin-top:6px;background:white;color:#18283d;min-width:0}button{font:600 12px Inter,'Segoe UI',Arial;cursor:pointer;border:0;border-radius:7px;padding:12px 13px;transition:filter .12s}button:hover{filter:brightness(.94)}button:disabled{opacity:.45;cursor:default}.primary{background:#0d476d;color:white}.outline{border:1px solid #c9d6e6;background:#f7f9fc;color:#24415b}.quiet{background:transparent;color:#46617b;border:1px solid #dce3ee;padding:8px 10px}.wide{width:100%;margin-top:15px}.error{color:#b12c3c!important;min-height:15px}.title-line{display:flex;justify-content:space-between;align-items:center;gap:16px}.title-line h1{font-size:24px;margin:0 0 6px}.title-line h1 span{font-size:15px;color:#63758c}.muted{font-size:12px;color:#6a7a90;line-height:1.5;margin:5px 0}.pill{display:inline-flex;border:1px solid #d5a96e;color:#845e2c;padding:7px 12px;border-radius:25px;font-size:11px;background:#fff8ed;font-weight:600}.pill.good{color:#176e56;background:#eaf7f1;border-color:#a5dfcb}.status-set{display:flex;gap:8px;align-items:center}.tabs{display:flex;border-bottom:1px solid #d9e2ed;gap:6px;margin:19px 0}.tab{background:transparent;color:#52647d;padding:13px 18px;border-bottom:3px solid transparent;border-radius:0}.tab.active{color:#0b5378;border-color:#0b5378}.workspace{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;align-items:start}.controls,.results{min-width:0}.panel{background:white;border:1px solid #dfe6ef;border-radius:10px;padding:17px 19px;margin:0 0 14px;box-shadow:0 2px 5px #15324e08}.panel h2{font-size:13px;margin:0 0 12px;font-weight:750;letter-spacing:.1px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0px 10px}.form-grid label{font-size:11px}.button-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.button-grid button{padding:11px 8px}.note{font-size:11px;color:#748399;line-height:1.55}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.kpis article{background:white;border:1px solid #dce5ed;border-radius:10px;padding:15px 18px}.kpis small{color:#6a7a8f;display:block;font-size:10px;font-weight:700;letter-spacing:.4px;min-height:25px}.kpis strong{font-size:29px;color:#122940;letter-spacing:-.9px}.kpis span{font-size:11px;color:#76859a;margin-left:3px}.chart-header{display:flex;justify-content:space-between;align-items:baseline}.chart-header small{font-size:11px;color:#8190a2}canvas{display:block;width:100%;height:210px}.chart:nth-of-type(2) canvas{height:175px}.legend{font-size:11px;color:#607086;display:flex;gap:8px;align-items:center;margin-top:3px}.legend i{display:inline-block;width:12px;height:3px;border-radius:3px;margin-left:9px}.readings{font-size:12px;color:#36526c}.export{display:inline-block;margin-top:10px;font-size:12px;color:#0b5c8c;text-decoration:none;font-weight:700}#hardware-mode{background:#f6f8fb;padding:8px;border-radius:6px;margin-top:12px}.error-box{color:#b12c3c}@media(max-width:1050px){.workspace{grid-template-columns:1fr}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.controls .panel{margin:0}}@media(max-width:650px){main{padding:0 12px}.smalltag{display:none}.controls{display:block}.controls .panel{margin-bottom:12px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.title-line{flex-wrap:wrap}.tab{padding:11px 8px;font-size:11px}}
+</style></head>
+<body><div style="background:#fff3d8;border-bottom:1px solid #efd8a9;padding:9px 16px;text-align:center;color:#805b17;font:600 12px Segoe UI,Arial,sans-serif">OFFLINE BROWSER PREVIEW — sample data only; no MATLAB, ADAM, or heaters connected. Use demo login code 123456.</div>
+<header><div class="brand"><span class="logo">U<span>O</span></span><div><b>Unit Operations Laboratory</b><small>MATLAB-driven digital twin & process control</small></div></div><div class="smalltag">Student station interface</div></header>
+<main id="login-panel" class="login">
+  <h1>Connect to your station</h1><p>Use the access code issued by your instructor. MATLAB runs on the central laboratory computer; you only need this browser.</p>
+  <label>Assigned station<select id="station-choice"><option value="1">Station 1</option><option value="2">Station 2</option><option value="3">Station 3</option><option value="4">Station 4</option></select></label>
+  <label>Station code<input id="station-code" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" placeholder="6-digit station code"></label>
+  <button id="login-btn" class="primary">Open station dashboard</button><p id="login-error" class="error"></p>
+</main>
+<main id="lab-panel" hidden>
+  <div class="title-line"><div><h1>Temperature control <span id="station-heading"></span></h1><p class="muted">Digital twin · WIKA temperature acquisition · MATLAB PID analysis</p></div><div class="status-set"><span id="bridge-status" class="pill">Connecting</span><button id="logout" class="quiet">Sign out</button></div></div>
+  <nav class="tabs"><button class="tab active" data-tab="simulation">Simulation</button><button class="tab" data-tab="live">Live Experiment</button><button class="tab" data-tab="tuning">ZN / IMC Tuning</button></nav>
+  <div class="workspace">
+    <section class="controls">
+      <div class="panel"><h2>PID settings</h2><div class="form-grid">
+        <label>Temperature setpoint (°C)<input id="sp" type="number" step="0.5" value="35"></label>
+        <label>Proportional Kp (%/°C)<input id="kp" type="number" min="0" step="0.1" value="2"></label>
+        <label>Integral Ki (%/[°C·s])<input id="ki" type="number" min="0" step="0.001" value="0.015"></label>
+        <label>Derivative Kd (%·s/°C)<input id="kd" type="number" min="0" step="0.1" value="0"></label>
+      </div><button class="primary wide" id="apply">Apply PID settings</button></div>
+      <div class="panel" id="model-panel"><h2>Digital twin model</h2><div class="form-grid">
+        <label>Heater gain (°C / full power)<input id="gain" type="number" min="0.001" value="70"></label>
+        <label>Thermal time constant (s)<input id="tau" type="number" min="0.001" value="100"></label>
+        <label>Dead time (s)<input id="deadtime" type="number" min="0" value="5"></label>
+        <label>SSR PWM window (s)<input id="window" type="number" min="4" max="120" value="20"></label>
+      </div><button id="apply-model" class="outline wide">Apply model</button></div>
+      <div class="panel" id="sim-controls"><h2>Digital twin</h2><div class="button-grid"><button id="sim-start" class="primary">Start simulation</button><button id="sim-pause" class="outline">Pause</button><button id="sim-reset" class="outline">Reset</button><button id="disturb" class="outline">Toggle cooling disturbance</button></div></div>
+      <div class="panel" id="live-controls" hidden><h2>Physical station</h2><p class="muted">Your assigned ADAM-6024 analog input provides temperature; MATLAB computes PID and commands the matching ADAM-6050 output only when its instructor enable is armed. Live setpoints must remain below the station's instructor-configured software trip; the digital twin does not have that trip.</p><div class="button-grid"><button id="live-start" class="primary">Start live PID</button><button id="live-stop" class="outline">STOP PID / Station DO OFF</button></div><div class="note" id="hardware-mode"></div></div>
+      <div class="panel" id="tuning-controls" hidden><h2>Controller tuning</h2><p class="muted">Model-based recommendations from your entered gain, time constant and process dead time.</p><label>Tuning method<select id="method"><option value="zn_pi">Ziegler–Nichols PI</option><option value="zn_pid">Ziegler–Nichols PID</option><option value="imc_pi">Conservative IMC PI</option><option value="manual">Manual PID (keep gains)</option><option value="fuzzy">Fuzzy PID supervisor (3x3 Sugeno rules)</option></select></label><button id="tune-apply" class="primary wide">Calculate & apply gains</button><p class="note">ZN tuning can be aggressive; compare with IMC in simulation before any physical experiment.</p></div>
+    </section>
+    <section class="results"><div class="kpis"><article><small id="temperature-label">SIMULATED TEMPERATURE</small><strong id="temperature">—</strong><span>°C</span></article><article><small>SETPOINT</small><strong id="setpoint-card">—</strong><span>°C</span></article><article><small id="duty-label">PID OUTPUT</small><strong id="duty">—</strong><span>%</span></article><article><small>ADAM-6050 OUTPUT LOGIC</small><strong id="do-state">—</strong><span id="do-sub">readback only</span></article></div>
+      <div class="panel chart"><div class="chart-header"><h2>Temperature and setpoint</h2><small>Measured versus simulated</small></div><canvas id="temperature-chart" width="960" height="236"></canvas><div class="legend"><i style="background:#159a8b"></i> Digital twin <i style="background:#6087dc"></i> WIKA AI <i style="background:#c99649"></i> Setpoint</div></div>
+      <div class="panel chart"><div class="chart-header"><h2>PID response</h2><small>P / I / D and calculated duty</small></div><canvas id="pid-chart" width="960" height="202"></canvas><div class="legend"><i style="background:#159a8b"></i> Output demand <i style="background:#6087dc"></i> P term <i style="background:#c99649"></i> I term <i style="background:#bd7388"></i> D term</div></div>
+      <div class="panel chart"><div class="chart-header"><h2>Real-time acquisition</h2><small id="acquisition-note">Waiting for MATLAB</small></div><p class="readings" id="readings">—</p><p class="note" id="system-message"></p><a id="export-link" class="export" href="/api/export.csv?mode=simulation">Export digital twin CSV</a></div>
+    </section>
+  </div>
+</main>
+<script>
+'use strict';
+const PREVIEW = {
+ station:null, t:0, simRunning:true, liveRunning:false, outputArmed:false, cooling:false,
+ settings:{setpoint:35,kp:2,ki:0.015,kd:0,gain:70,tau:100,deadtime:5,window:20},
+ controlMode:'PID', start:Date.now()
+};
+function previewHistory(){
+ const h=[],s=PREVIEW.settings;
+ for(let j=0;j<180;j++){
+  const t=j*1.3;
+  const cool=PREVIEW.cooling&&t>145?-3.0*(1-Math.exp(-(t-145)/22)):0;
+  const twin=21+(s.setpoint-21)*(1-Math.exp(-Math.max(0,t-s.deadtime)/55))+cool+0.1*Math.sin(j/8);
+  const physical=21.7+(s.setpoint-22.3)*(1-Math.exp(-Math.max(0,t-10)/85))+0.06*Math.sin(j/9);
+  const p=s.kp*(s.setpoint-twin), ii=s.ki*(j*1.5), dd=0;
+  const sd=Math.max(0,Math.min(100,p+ii));
+  const lp=s.kp*(s.setpoint-physical), li=s.ki*j, ld=0;
+  const lduty=Math.max(0,Math.min(100,lp+li));
+  h.push([t,twin,physical,s.setpoint,sd,lduty,p,ii,t,lp,li,ld]);
+ }
+ return h;
+}
+function previewState(){
+ const h=previewHistory(),r=h.at(-1),s=PREVIEW.settings;
+ return {
+  engine_online:true,sim_temp:r[1],measured_c:r[2],setpoint:s.setpoint,
+  sim_duty:r[4],live_duty:r[5],do_readback:false,
+  ai_channel:PREVIEW.station-1,output_channel:PREVIEW.station-1,
+  live_ok:true,live_setpoint_ok:s.setpoint<60,live_running:PREVIEW.liveRunning,
+  sim_running:PREVIEW.simRunning,output_armed:PREVIEW.outputArmed,
+  software_trip_c:60,fault:'',current_ma:4+16*r[2]/150,
+  control_mode:PREVIEW.controlMode,daq_message:'PREVIEW DATA — no real WIKA or ADAM connection',
+  calibration_note:'Example input span 0–150°C',history:h,...s
+ }
+}
+function previewResponse(obj,status=200){return Promise.resolve(new Response(JSON.stringify(obj),{status,headers:{'Content-Type':'application/json'}}))}
+window.fetch=async (input, options={})=>{
+ const path=String(input),body=options.body?JSON.parse(options.body):{};
+ if(path==='/api/me')return previewResponse({station:PREVIEW.station});
+ if(path==='/api/login'){
+   if(!/^\d{6}$/.test(String(body.code||'')))return previewResponse({error:'Use demo code 123456'},403);
+   PREVIEW.station=Number(body.station);return previewResponse({ok:true,station:PREVIEW.station});
+ }
+ if(path==='/api/logout'){PREVIEW.station=null;return previewResponse({ok:true})}
+ if(path==='/api/state')return previewResponse({station:PREVIEW.station,data:PREVIEW.station?previewState():null});
+ if(path==='/api/command'){
+   if(body.command==='settings')Object.assign(PREVIEW.settings,body.values||{});
+   if(body.command==='start_sim')PREVIEW.simRunning=true;
+   if(body.command==='pause_sim')PREVIEW.simRunning=false;
+   if(body.command==='reset_sim'){PREVIEW.simRunning=false;PREVIEW.cooling=false;}
+   if(body.command==='cooling_disturbance')PREVIEW.cooling=!PREVIEW.cooling;
+   if(body.command==='start_live')PREVIEW.liveRunning=true;
+   if(body.command==='stop_live')PREVIEW.liveRunning=false;
+   if(body.command==='set_tuning'){
+     const s=PREVIEW.settings,k=s.gain/100,T=s.tau,L=Math.max(1,s.deadtime),m=body.method;
+     PREVIEW.controlMode=m==='fuzzy'?'Fuzzy PID':'PID';
+     if(m==='zn_pi'){s.kp=.9*T/(k*L);s.ki=s.kp/(3*L);s.kd=0}
+     if(m==='zn_pid'){s.kp=1.2*T/(k*L);s.ki=s.kp/(2*L);s.kd=s.kp*L/2}
+     if(m==='imc_pi'){const lambda=Math.max(T/2,L);s.kp=T/(k*(lambda+L));s.ki=s.kp/Math.min(T,4*(lambda+L));s.kd=0}
+   }
+   return previewResponse({queued:true,message:'PREVIEW ONLY — command not sent to any equipment.'});
+ }
+ return previewResponse({error:'Unknown offline-preview request'},404);
+};
+window.addEventListener('DOMContentLoaded',()=>{
+ const ex=document.getElementById('export-link');
+ ex.addEventListener('click',(ev)=>{
+  ev.preventDefault();
+  const sim=ex.href.includes('mode=simulation');
+  const cols=sim?[0,1,3,4,6,7]:[8,2,3,5,9,10,11];
+  const heads=sim?['SimulationElapsed_s','DigitalTwin_C','Setpoint_C','SimPID_Duty_pct','SimP_pct','SimI_pct']:
+          ['LiveElapsed_s','Measured_C','Setpoint_C','LivePID_Duty_pct','LiveP_pct','LiveI_pct','LiveD_pct'];
+  const csv=[heads.join(','),...previewHistory().map(row=>cols.map(i=>Number(row[i]).toFixed(4)).join(','))].join('\n');
+  const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a=document.createElement('a');a.href=u;a.download='station'+(PREVIEW.station||1)+'_'+(sim?'simulation':'live')+'_PREVIEW.csv';a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),2000);
+ });
+});
+</script><script>'use strict';
+const $=id=>document.getElementById(id);
+let station=null,tab='simulation',data=null,dirty=false;
+const format=(x,d=1)=>x===null||x===undefined||!Number.isFinite(Number(x))?'—':Number(x).toFixed(d);
+async function req(path,payload){let opts={cache:'no-store',credentials:'same-origin'};if(payload!==undefined){opts.method='POST';opts.headers={'Content-Type':'application/json'};opts.body=JSON.stringify(payload)}let r=await fetch(path,opts);let j=await r.json();if(!r.ok)throw Error(j.error||`HTTP ${r.status}`);return j}
+function showLab(on){$('login-panel').hidden=on;$('lab-panel').hidden=!on;if(on){$('station-heading').textContent='· Station '+station;updateExportLink();}}
+async function login(){try{if(!/^[0-9]{6}$/.test($('station-code').value)){ $('login-error').textContent='Enter your 6-digit station code';return;}let r=await req('/api/login',{station:parseInt($('station-choice').value,10),code:$('station-code').value});station=r.station;$('station-code').value='';showLab(true);await refresh()}catch(e){$('login-error').textContent=e.message}}
+async function logout(){await req('/api/logout',{});station=null;data=null;showLab(false)}
+async function cmd(command,extra={}){try{let res=await req('/api/command',{command,...extra});$('system-message').textContent=res.message||'Command accepted';setTimeout(refresh,450)}catch(e){$('system-message').textContent='Command error: '+e.message}}
+async function saveSettings(model){let ids=model?['gain','tau','deadtime','window']:['sp','kp','ki','kd'];let keys=model?['gain','tau','deadtime','window']:['setpoint','kp','ki','kd'];let v={};for(let i=0;i<keys.length;i++)v[keys[i]]=Number($(ids[i]).value);dirty=false;await cmd('settings',{values:v})}
+function switchTab(next){tab=next;document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===next));$('sim-controls').hidden=next!=='simulation';$('live-controls').hidden=next!=='live';$('tuning-controls').hidden=next!=='tuning';$('model-panel').hidden=next==='live';updateExportLink();render()}
+async function refresh(){if(!station)return;try{let r=await req('/api/state');data=r.data;if(data){render()}else{$('bridge-status').textContent='Waiting for MATLAB';$('bridge-status').className='pill';}}catch(e){$('bridge-status').textContent='Disconnected';$('bridge-status').className='pill';$('system-message').textContent=e.message}}
+function updateExportLink(){
+ const link=$('export-link');
+ if(!link) return;
+ const mode=(tab==='live')?'live':'simulation';
+ link.href='/api/export.csv?mode='+mode;
+ link.textContent=(mode==='live')?'Export live experiment CSV':'Export digital twin CSV';
+}
+function render(){if(!data)return;let s=data;let online=s.engine_online;
+ $('bridge-status').textContent=online?'MATLAB online':'MATLAB offline / stale';$('bridge-status').className=online?'pill good':'pill';
+ let live=tab==='live'; $('temperature-label').textContent=live?'WIKA TEMPERATURE':'DIGITAL TWIN TEMP';$('temperature').textContent=format(live?s.measured_c:s.sim_temp);$('setpoint-card').textContent=format(s.setpoint);$('duty').textContent=format(live?s.live_duty:s.sim_duty);$('do-state').textContent=(s.do_readback===null||Array.isArray(s.do_readback))?'—':s.do_readback?'ON':'OFF';
+ $('duty-label').textContent=live?'REAL PID DUTY':'SIMULATED PID DUTY';
+ $('acquisition-note').textContent='ADAM-6024 AI'+s.ai_channel+' · '+(s.live_ok?'Input valid':'Check sensor / DAQ');
+ $('readings').textContent='Transmitter current: '+format(s.current_ma,3)+' mA | Control: '+(s.control_mode||'PID')+' | Live PID: '+(s.live_running?'RUNNING':'STOPPED')+' | Twin: '+(s.sim_running?'RUNNING':'PAUSED');
+ $('hardware-mode').textContent=(s.output_armed?'Instructor armed DO'+s.output_channel+'. MATLAB PID may command its SSR. ':'DO'+s.output_channel+' is DISARMED; measurements and calculated PID remain available. ')+
+   'Instructor software trip: '+format(s.software_trip_c)+' °C. Live setpoint must be below this threshold.';
+ if(s.fault)$('system-message').textContent='Controller: '+s.fault;
+ else if(!online)$('system-message').textContent='Central MATLAB controller is not updating. Do not interpret displayed values as live.';
+ else $('system-message').textContent=s.daq_message+' · '+s.calibration_note;
+ $('live-start').disabled=!online||!s.live_ok||!s.live_setpoint_ok||s.live_running;
+ $('live-stop').disabled=!online;
+ if(!dirty){let mapping={sp:'setpoint',kp:'kp',ki:'ki',kd:'kd',gain:'gain',tau:'tau',deadtime:'deadtime',window:'window'};for(let [id,key] of Object.entries(mapping))if(document.activeElement!==$(id))$(id).value=s[key]}
+ const matrix=Array.isArray(s.history)?s.history:[];
+ // MATLAB jsonencode of numeric 2D matrix serializes each row as an array.
+ let samples=matrix.map(x=>Array.isArray(x)?x:[]).filter(x=>x.length>=8);
+ draw('temperature-chart',samples,[{idx:1,c:'#159a8b'},{idx:2,c:'#6087dc'},{idx:3,c:'#c99649'}]);
+ draw('pid-chart',samples,[{idx:live?5:4,c:'#159a8b'},
+  {idx:live?9:6,c:'#6087dc'},{idx:live?10:7,c:'#c99649'},
+  ...(live?[{idx:11,c:'#bd7388'}]:[])]);
+}
+function draw(id,rows,series){const c=$(id),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);const L=49,R=14,T=13,B=23;
+ let pts=rows.slice(-250),values=[];for(let r of pts)for(let e of series){let v=r[e.idx];if(Number.isFinite(v))values.push(v)}let lo=values.length?Math.min(...values):0,hi=values.length?Math.max(...values):100;if(hi-lo<8){lo-=4;hi+=4}else{let gap=(hi-lo)*.13;lo-=gap;hi+=gap}if(!Number.isFinite(lo)||!Number.isFinite(hi)||hi===lo)return;
+ ctx.strokeStyle='#e8eef5';ctx.fillStyle='#7d8da3';ctx.lineWidth=1;ctx.font='11px Segoe UI, sans-serif';for(let k=0;k<=4;k++){let y=T+k*(h-T-B)/4;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(w-R,y);ctx.stroke();ctx.fillText((hi-(hi-lo)*k/4).toFixed(0),8,y+3)}
+ for(let e of series){ctx.beginPath();ctx.lineWidth=2.5;ctx.strokeStyle=e.c;let started=false;for(let i=0;i<pts.length;i++){let v=pts[i][e.idx];if(!Number.isFinite(v)){started=false;continue}let x=L+i*(w-L-R)/Math.max(1,pts.length-1),y=T+(hi-v)/(hi-lo)*(h-T-B);if(!started){ctx.moveTo(x,y);started=true}else{ctx.lineTo(x,y)}}ctx.stroke()}
+ ctx.fillStyle='#7d8da3';ctx.fillText('Elapsed samples →',w-122,h-4)}
+$('login-btn').onclick=login;$('station-code').addEventListener('keydown',e=>{if(e.key==='Enter')login()});$('logout').onclick=logout;$('apply').onclick=()=>saveSettings(false);$('apply-model').onclick=()=>saveSettings(true);$('sim-start').onclick=()=>cmd('start_sim');$('sim-pause').onclick=()=>cmd('pause_sim');$('sim-reset').onclick=()=>cmd('reset_sim');$('disturb').onclick=()=>cmd('cooling_disturbance');$('live-start').onclick=()=>cmd('start_live');$('live-stop').onclick=()=>cmd('stop_live');$('tune-apply').onclick=()=>cmd('set_tuning',{method:$('method').value});
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));for(let id of ['sp','kp','ki','kd','gain','tau','deadtime','window'])$(id).addEventListener('input',()=>{dirty=true});
+(async()=>{try{let a=await req('/api/me');if(a.station){station=a.station;showLab(true);await refresh()}}catch(e){}setInterval(refresh,1200)})();
+</script>
+</body></html>

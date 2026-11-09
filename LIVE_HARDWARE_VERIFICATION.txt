@@ -1,0 +1,43 @@
+FOUR-STATION LIVE CONTROL VERIFICATION — READ BEFORE MAINS ENERGIZATION
+====================================================================
+This ZIP contains code, not a proven commissioned control system. MATLAB and
+ADAM modules/SSR hardware cannot be operated or verified in this environment.
+
+IP PLAN
+Master PC wired Ethernet: 192.168.0.200 (static)
+ADAM-6024 temperature inputs: 192.168.0.20 (confirm actual module IP)
+ADAM-6050 digital outputs: 192.168.0.21 (must be configured/verified)
+Students: http://192.168.0.200:8088 on the same isolated lab LAN
+
+ELECTRICALLY ISOLATED COMMISSIONING CHECK
+1. Confirm 6024 and 6050 respond on TCP/502. Run Verify_Dual_ADAM in MATLAB.
+2. Confirm actual sensor spans and 4-20 mA configuration on all four channels.
+   Code defaults to 0-150 C for every channel, which may not match hardware.
+3. With heater mains ISOLATED, substitute appropriate low-voltage indicators
+   at the outputs / SSR control side; have qualified personnel verify wiring.
+4. Independently verify DO0, DO1, DO2, DO3 correspond to stations 1,2,3,4.
+   Advantech module output coils are numbered 17,18,19,20 in Modbus mapping.
+5. Arm one station from instructor MATLAB; student uses Start live PID.
+   Confirm the expected indicator toggles and STOP commands it off.
+   Repeat all four independently; test four clients concurrently.
+6. Verify loss-of-browser heartbeat, invalid transmitter, communication
+   failure, and module fail-safe/watchdog behavior with safe indicators.
+7. Have the mains circuit, independent temperature cutoff, protective
+   devices and disconnect inspected and tested by a qualified electrician.
+   Only then proceed with supervised low-energy thermal commissioning.
+
+IMPORTANT FINDINGS
+- MATLAB holds four separate PID states and switches ADAM-6050 coils 17-20.
+- All output commands depend on correct IPs, module setup, register mapping,
+  24VDC supply, SSR input compatibility, and successful live sensor readings.
+- Browser can show live PID RUNNING while hardware is not instructor-armed;
+  RUNNING alone does NOT prove SSR switching.
+- DO readback is command/logic state, NOT proof of physical SSR conduction.
+- SSRs can fail ON and network/PC loss can leave outputs in unknown states.
+  Independent hardwired overtemperature protection and mains disconnect
+  must not depend on MATLAB or browser operation.
+- A single controller exception can stop/disarm ALL four stations.
+- The original uploaded package used the OLD master address .132; this ZIP
+  uses .239 in all relevant configuration/docs locations.
+- Stop existing Python bridge instances on TCP port 8088 before launching.
+- Six-digit codes are for an isolated trusted LAN, NOT internet exposure.

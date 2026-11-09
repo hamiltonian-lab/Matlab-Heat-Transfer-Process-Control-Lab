@@ -1,0 +1,15 @@
+NOVEMBER 2026 — 6-DIGIT STUDENT LOGIN / MASTER IP UPDATE
+
+- Four unique randomly generated six-digit numeric student access codes.
+- Codes persist in runtime/access_codes.json across service restarts.
+- Existing legacy long/alphanumeric codes in that file automatically rotate
+  to six-digit codes on first start with the new Python bridge.
+- Instructor sees codes via "Open station access codes" and runtime/
+  ACCESS_CODES_FOR_INSTRUCTOR.txt; no code is sent to browsers without login.
+- Student login field now accepts six digits and uses a numeric keyboard.
+- Replaced the uploaded package's old master IP 192.168.0.132 with the
+  user's established static Ethernet IP 192.168.0.200 in the launcher,
+  MATLAB display, bridge default and documentation.
+- No changes to Modbus I/O commands, PID, station mappings, arming logic,
+  software thermal trips, SSR duty commands, or MATLAB controller UI layout.
+- MATLAB/hardware output switching NOT verified here; see LIVE_HARDWARE_VERIFICATION.txt.

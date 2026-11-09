@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unit Operations · MATLAB PID Lab</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><div class="brand"><span class="logo">U<span>O</span></span><div><b>Unit Operations Laboratory</b><small>MATLAB-driven digital twin & process control</small></div></div><div class="smalltag">Student station interface</div></header>
+<main id="login-panel" class="login">
+  <h1>Connect to your station</h1><p>Use the access code issued by your instructor. MATLAB runs on the central laboratory computer; you only need this browser.</p>
+  <label>Assigned station<select id="station-choice"><option value="1">Station 1</option><option value="2">Station 2</option><option value="3">Station 3</option><option value="4">Station 4</option></select></label>
+  <label>Station code<input id="station-code" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" placeholder="6-digit station code"></label>
+  <button id="login-btn" class="primary">Open station dashboard</button><p id="login-error" class="error"></p>
+</main>
+<main id="lab-panel" hidden>
+  <div class="title-line"><div><h1>Temperature control <span id="station-heading"></span></h1><p class="muted">Digital twin · WIKA temperature acquisition · MATLAB PID analysis</p></div><div class="status-set"><span id="bridge-status" class="pill">Connecting</span><button id="logout" class="quiet">Sign out</button></div></div>
+  <nav class="tabs"><button class="tab active" data-tab="simulation">Simulation</button><button class="tab" data-tab="live">Live Experiment</button><button class="tab" data-tab="tuning">ZN / IMC Tuning</button></nav>
+  <div class="workspace">
+    <section class="controls">
+      <div class="panel"><h2>PID settings</h2><div class="form-grid">
+        <label>Temperature setpoint (°C)<input id="sp" type="number" step="0.5" value="35"></label>
+        <label>Proportional Kp (%/°C)<input id="kp" type="number" min="0" step="0.1" value="2"></label>
+        <label>Integral Ki (%/[°C·s])<input id="ki" type="number" min="0" step="0.001" value="0.015"></label>
+        <label>Derivative Kd (%·s/°C)<input id="kd" type="number" min="0" step="0.1" value="0"></label>
+      </div><button class="primary wide" id="apply">Apply PID settings</button></div>
+      <div class="panel" id="model-panel"><h2>Digital twin model</h2><div class="form-grid">
+        <label>Heater gain (°C / full power)<input id="gain" type="number" min="0.001" value="70"></label>
+        <label>Thermal time constant (s)<input id="tau" type="number" min="0.001" value="100"></label>
+        <label>Dead time (s)<input id="deadtime" type="number" min="0" value="5"></label>
+        <label>SSR PWM window (s)<input id="window" type="number" min="4" max="120" value="20"></label>
+      </div><button id="apply-model" class="outline wide">Apply model</button></div>
+      <div class="panel" id="sim-controls"><h2>Digital twin</h2><div class="button-grid"><button id="sim-start" class="primary">Start simulation</button><button id="sim-pause" class="outline">Pause</button><button id="sim-reset" class="outline">Reset</button><button id="disturb" class="outline">Toggle cooling disturbance</button></div></div>
+      <div class="panel" id="live-controls" hidden><h2>Physical station</h2><p class="muted">Your assigned ADAM-6024 analog input provides temperature; MATLAB computes PID and commands the matching ADAM-6050 output only when its instructor enable is armed. Live setpoints must remain below the station's instructor-configured software trip; the digital twin does not have that trip.</p><div class="button-grid"><button id="live-start" class="primary">Start live PID</button><button id="live-stop" class="outline">STOP PID / Station DO OFF</button></div><div class="note" id="hardware-mode"></div></div>
+      <div class="panel" id="tuning-controls" hidden><h2>Controller tuning</h2><p class="muted">Model-based recommendations from your entered gain, time constant and process dead time.</p><label>Tuning method<select id="method"><option value="zn_pi">Ziegler–Nichols PI</option><option value="zn_pid">Ziegler–Nichols PID</option><option value="imc_pi">Conservative IMC PI</option><option value="manual">Manual PID (keep gains)</option><option value="fuzzy">Fuzzy PID supervisor (3x3 Sugeno rules)</option></select></label><button id="tune-apply" class="primary wide">Calculate & apply gains</button><p class="note">ZN tuning can be aggressive; compare with IMC in simulation before any physical experiment.</p></div>
+    </section>
+    <section class="results"><div class="kpis"><article><small id="temperature-label">SIMULATED TEMPERATURE</small><strong id="temperature">—</strong><span>°C</span></article><article><small>SETPOINT</small><strong id="setpoint-card">—</strong><span>°C</span></article><article><small id="duty-label">PID OUTPUT</small><strong id="duty">—</strong><span>%</span></article><article><small>ADAM-6050 OUTPUT LOGIC</small><strong id="do-state">—</strong><span id="do-sub">readback only</span></article></div>
+      <div class="panel chart"><div class="chart-header"><h2>Temperature and setpoint</h2><small>Measured versus simulated</small></div><canvas id="temperature-chart" width="960" height="236"></canvas><div class="legend"><i style="background:#159a8b"></i> Digital twin <i style="background:#6087dc"></i> WIKA AI <i style="background:#c99649"></i> Setpoint</div></div>
+      <div class="panel chart"><div class="chart-header"><h2>PID response</h2><small>P / I / D and calculated duty</small></div><canvas id="pid-chart" width="960" height="202"></canvas><div class="legend"><i style="background:#159a8b"></i> Output demand <i style="background:#6087dc"></i> P term <i style="background:#c99649"></i> I term <i style="background:#bd7388"></i> D term</div></div>
+      <div class="panel chart"><div class="chart-header"><h2>Real-time acquisition</h2><small id="acquisition-note">Waiting for MATLAB</small></div><p class="readings" id="readings">—</p><p class="note" id="system-message"></p><a id="export-link" class="export" href="/api/export.csv?mode=simulation">Export digital twin CSV</a></div>
+    </section>
+  </div>
+</main>
+<script src="/app.js"></script>
+</body></html>
