@@ -124,12 +124,22 @@ class Handler(BaseHTTPRequestHandler):
             if not auth:
                 self.send_json({'error':'Sign in first'},401);return
             mode=str(query.get('mode',['combined'])[0]).lower()
-            if mode=='simulation':
-                file=RUNTIME / f'station{auth["station"]}_simulation.csv'
-                download=f'station{auth["station"]}_simulation.csv'
-            elif mode=='live':
-                file=RUNTIME / f'station{auth["station"]}_live.csv'
-                download=f'station{auth["station"]}_live.csv'
+            if mode in ('simulation','live'):
+                label='sim' if mode=='simulation' else 'live'
+                pointer=RUNTIME / f'station{auth["station"]}_{label}_latest.txt'
+                try:
+                    name=pointer.read_text(encoding='utf-8').strip()
+                    # Only names created by MATLAB's persistent logger, no paths.
+                    expected=f'station{auth["station"]}_{label}_'
+                    if (not name.startswith(expected) or not name.endswith('.csv')
+                            or pathlib.PurePath(name).name != name):
+                        raise ValueError('Invalid experiment file reference')
+                    file=RUNTIME / 'experiment_logs' / name
+                    download=name
+                except (OSError,ValueError):
+                    # Backward compatibility with older installations.
+                    file=RUNTIME / f'station{auth["station"]}_{mode}.csv'
+                    download=f'station{auth["station"]}_{mode}.csv'
             else:
                 file=RUNTIME / f'station{auth["station"]}_history.csv'
                 download=f'station{auth["station"]}_data.csv'

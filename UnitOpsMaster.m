@@ -28,6 +28,7 @@ classdef UnitOpsMaster < handle
         TripFields = cell(1,4)
         LastTick
         Busy = false
+        ExperimentLogs   % Per-station append-only experiment records
         Closing = false
     end
     methods
@@ -38,6 +39,13 @@ classdef UnitOpsMaster < handle
             inbox=fullfile(obj.Runtime,'inbox');
             if ~exist(inbox,'dir'),mkdir(inbox);end
             obj.S = repmat(obj.blankStation(),1,4);
+            blankLog=struct('sim_file','','live_file','sim_active',false,'live_active',false, ...
+                'sim_start',NaN,'live_start',NaN,'sim_count',0,'live_count',0, ...
+                'sim_events',{{}},'live_events',{{}},'sim_reached_count',0, ...
+                'live_reached_count',0,'sim_reached',false,'live_reached',false, ...
+                'sim_close_after_tick',false,'live_close_after_tick',false, ...
+                'last_live_input_valid',NaN,'sim_last_epoch',NaN,'live_last_epoch',NaN);
+            obj.ExperimentLogs=repmat(blankLog,1,4);
             for i=1:4
                 obj.S(i).number=i;
                 obj.S(i).ai_channel=i-1;
@@ -156,6 +164,7 @@ classdef UnitOpsMaster < handle
                 end
             end
             obj.OutputArmed(i)=desired;
+            obj.queueLogEvent(i,'live',sprintf('Instructor hardware arm changed: %d',desired));
             if ~desired,obj.sendOff(i);end
             obj.publishAll();obj.updateUI();
         end
@@ -170,6 +179,7 @@ classdef UnitOpsMaster < handle
             end
             obj.stopLive(i); % Never change the physical trip during a run.
             obj.SoftwareTrip_C(i)=newTrip;
+            obj.queueLogEvent(i,'live',sprintf('Instructor temperature trip changed to %.2f C',newTrip));
             obj.publishAll();obj.updateUI();
         end
 
@@ -251,15 +261,19 @@ classdef UnitOpsMaster < handle
                         s.live_seconds=s.live_seconds+dt;
                         if ~s.live_ok || ~isfinite(s.measured_c)
                             s.fault='Temperature input invalid or disconnected';
+                            obj.queueLogEvent(i,'live',['Input fault: ' s.fault]);
                             obj.S(i)=s;obj.stopLive(i);s=obj.S(i);
                         elseif s.measured_c>=obj.SoftwareTrip_C(i)
                             s.fault=sprintf('Instructor software temperature trip: %.1f C',obj.SoftwareTrip_C(i));
+                            obj.queueLogEvent(i,'live',['Temperature trip: ' s.fault]);
                             obj.S(i)=s;obj.stopLive(i);s=obj.S(i);
                         elseif s.setpoint<obj.AI_Tmin(i) || s.setpoint>=obj.SoftwareTrip_C(i)
                             s.fault='Live setpoint outside instructor-configured physical operating range';
+                            obj.queueLogEvent(i,'live',['Setpoint not permitted: ' s.fault]);
                             obj.S(i)=s;obj.stopLive(i);s=obj.S(i);
                         elseif obj.OutputArmed(i) && ~obj.hasBrowserHeartbeat(i)
                             s.fault='Student browser heartbeat lost';
+                            obj.queueLogEvent(i,'live','Browser heartbeat lost: heater control stopped; logging continues');
                             obj.S(i)=s;obj.stopLive(i);s=obj.S(i);
                         else
                             [s,s.live_duty,s.live_p,s.live_i,s.live_d]=obj.pidStep(s,s.measured_c,dt,true);
@@ -271,6 +285,7 @@ classdef UnitOpsMaster < handle
                                 if desired~=s.do_request
                                     s.do_readback=obj.commandDO(i,desired);
                                     s.do_request=desired;
+                                    obj.queueLogEvent(i,'live',sprintf('SSR DO%d commanded %s',i-1,obj.yesNo(desired)));
                                 end
                             end
                         end
@@ -283,6 +298,7 @@ classdef UnitOpsMaster < handle
                     if size(s.history,1)>400,s.history=s.history(end-399:end,:);end
                     obj.S(i)=s;
                 end
+                obj.recordExperimentSamples(); % Persistent append-only files, separate from 400-row plots.
                 obj.publishAll();
                 obj.updateUI();
             catch ME
@@ -420,6 +436,9 @@ classdef UnitOpsMaster < handle
         end
 
         function stopLive(obj,i)
+            if obj.S(i).live_running
+                obj.queueLogEvent(i,'live','Live PID stopped (heater output requested OFF)');
+            end
             s=obj.S(i);s.live_running=false;s.live_duty=0;
             s.do_request=false;
             obj.S(i)=s;
@@ -428,6 +447,14 @@ classdef UnitOpsMaster < handle
 
         function stopAll(obj)
             for j=1:4
+                if obj.ExperimentLogs(j).live_active
+                    obj.queueLogEvent(j,'live','Instructor STOP ALL / controller fault: heating stopped');
+                    obj.ExperimentLogs(j).live_close_after_tick=true;
+                end
+                if obj.ExperimentLogs(j).sim_active
+                    obj.queueLogEvent(j,'sim','Instructor STOP ALL / controller fault: simulation stopped');
+                    obj.ExperimentLogs(j).sim_close_after_tick=true;
+                end
                 obj.S(j).sim_running=false;
                 obj.S(j).live_running=false;
                 obj.S(j).live_duty=0;
@@ -438,6 +465,9 @@ classdef UnitOpsMaster < handle
                 end
             end
             obj.sendOff();
+            try,obj.recordExperimentSamples();catch ME
+                obj.DAQMessage=['Experiment logging failed: ' ME.message];
+            end
             try,obj.publishAll();catch,end
             try,obj.updateUI();catch,end
         end
@@ -483,23 +513,45 @@ classdef UnitOpsMaster < handle
                                         case 'window',valid=v>=4&&v<=120; % Physical SSR cycle-time engineering constraint
                                         otherwise,valid=false;
                                     end
-                                    if valid,s.(f)=v;end
+                                    if valid
+                                        prior=s.(f);
+                                        if prior~=v
+                                            label=f;
+                                            if strcmp(f,'kp'),label='Kp';end
+                                            if strcmp(f,'ki'),label='Ki';end
+                                            if strcmp(f,'kd'),label='Kd';end
+                                            obj.queueLogEvent(i,'sim',sprintf('%s changed: %.6g -> %.6g',label,prior,v));
+                                            obj.queueLogEvent(i,'live',sprintf('%s changed: %.6g -> %.6g',label,prior,v));
+                                            if strcmp(f,'setpoint'),obj.resetReachedTracking(i);end
+                                        end
+                                        s.(f)=v;
+                                    end
                                 end
                             end
                         case 'start_sim'
+                            if ~obj.ExperimentLogs(i).sim_active
+                                obj.startExperimentLog(i,'sim');
+                            else
+                                obj.queueLogEvent(i,'sim','Simulation resumed');
+                            end
                             s.sim_running=true;
                         case 'pause_sim'
                             s.sim_running=false;
+                            obj.queueLogEvent(i,'sim','Simulation paused');
                         case 'reset_sim'
                             s.sim_running=false;s.sim_temp=21;s.sim_seconds=0;
                             s.sim_integral=0;s.sim_prev=NaN;s.delay_queue=[];s.history=zeros(0,12);
+                            obj.queueLogEvent(i,'sim','Simulation reset; end of recorded run');
+                            obj.ExperimentLogs(i).sim_close_after_tick=true;
                         case 'cooling_disturbance'
                             if s.cool_disturbance==0,s.cool_disturbance=-12;
                             else,s.cool_disturbance=0;end
+                            obj.queueLogEvent(i,'sim',sprintf('Cooling disturbance changed to %.1f C',s.cool_disturbance));
                         case 'start_live'
                             if s.live_ok && s.measured_c<obj.SoftwareTrip_C(i) ...
                                     && s.setpoint>=obj.AI_Tmin(i) && s.setpoint<obj.SoftwareTrip_C(i)
                                 obj.S(i)=s;obj.stopLive(i);s=obj.S(i);
+                                obj.startExperimentLog(i,'live');
                                 s.live_running=true;s.live_seconds=0;
                                 s.live_integral=0;s.live_prev=NaN;s.fault='';
                             else
@@ -508,14 +560,23 @@ classdef UnitOpsMaster < handle
                             end
                         case 'stop_live'
                             obj.S(i)=s;obj.stopLive(i);s=obj.S(i);
+                            obj.queueLogEvent(i,'live','Student STOP command; end of recorded run');
+                            obj.ExperimentLogs(i).live_close_after_tick=true;
                         case 'set_tuning'
                             if strcmp(char(cmd.method),'fuzzy')
                                 s.control_mode='Fuzzy PID';
+                                obj.queueLogEvent(i,'sim','Fuzzy PID tuning selected');
+                                obj.queueLogEvent(i,'live','Fuzzy PID tuning selected');
                             else
                                 [kp,ki,kd]=obj.tuning(s,char(cmd.method));
                                 if all(isfinite([kp ki kd]))&&kp>=0&&ki>=0&&kd>=0
+                                    old=[s.kp s.ki s.kd];
                                     s.kp=kp;s.ki=ki;s.kd=kd;
                                     s.control_mode='PID';
+                                    msg=sprintf('Tuning %s applied: Kp %.6g -> %.6g; Ki %.6g -> %.6g; Kd %.6g -> %.6g', ...
+                                        char(cmd.method),old(1),kp,old(2),ki,old(3),kd);
+                                    obj.queueLogEvent(i,'sim',msg);
+                                    obj.queueLogEvent(i,'live',msg);
                                 else
                                     s.fault='Tuning recommendation is non-finite or uses negative PID gains';
                                 end
@@ -541,6 +602,197 @@ classdef UnitOpsMaster < handle
                     Ti=min(T,4*(lambda+L));ki=kp/Ti;kd=0;
                 otherwise
                     kp=s.kp;ki=s.ki;kd=s.kd;
+            end
+        end
+
+        function resetReachedTracking(obj,i)
+            obj.ExperimentLogs(i).sim_reached_count=0;
+            obj.ExperimentLogs(i).live_reached_count=0;
+            obj.ExperimentLogs(i).sim_reached=false;
+            obj.ExperimentLogs(i).live_reached=false;
+        end
+
+        function queueLogEvent(obj,i,mode,message)
+            % Only log events belonging to a currently active experiment.
+            if strcmp(mode,'sim')
+                if ~obj.ExperimentLogs(i).sim_active,return;end
+                events=obj.ExperimentLogs(i).sim_events;
+                events{end+1}=char(message);
+                obj.ExperimentLogs(i).sim_events=events;
+            else
+                if ~obj.ExperimentLogs(i).live_active,return;end
+                events=obj.ExperimentLogs(i).live_events;
+                events{end+1}=char(message);
+                obj.ExperimentLogs(i).live_events=events;
+            end
+        end
+
+        function startExperimentLog(obj,i,mode)
+            % Create a NEW file per experiment. Never overwrite earlier experiments.
+            folder=fullfile(obj.Runtime,'experiment_logs');
+            if ~exist(folder,'dir'),mkdir(folder);end
+            filename=sprintf('station%d_%s_%s.csv',i,mode,datestr(now,'yyyymmdd_HHMMSS_FFF'));
+            path=fullfile(folder,filename);
+            suffix=1;
+            while exist(path,'file')
+                filename=sprintf('station%d_%s_%s_%d.csv',i,mode,datestr(now,'yyyymmdd_HHMMSS_FFF'),suffix);
+                path=fullfile(folder,filename);suffix=suffix+1;
+            end
+            if strcmp(mode,'sim')
+                header=['Sample,Elapsed_s,ElapsedExact_s,TimestampLocal,EpochUTC_s,' ...
+                    'DigitalTwin_C,Setpoint_C,Kp,Ki,Kd,SimPID_Duty_pct,SimP_pct,SimI_pct,SimD_pct,' ...
+                    'HeaterGain_C,TimeConstant_s,DeadTime_s,CoolingDisturbance_C,SimulationRunning,Event'];
+            else
+                header=['Sample,Elapsed_s,ElapsedExact_s,TimestampLocal,EpochUTC_s,' ...
+                    'Measured_C,Setpoint_C,Kp,Ki,Kd,LivePID_Duty_pct,LiveP_pct,LiveI_pct,LiveD_pct,' ...
+                    'TransmitterCurrent_mA,InputValid,SSR_Requested,SSR_Readback,InstructorArmed,LivePIDRunning,Event'];
+            end
+            fid=fopen(path,'w');
+            if fid<0,error('Cannot create experiment log: %s',path);end
+            c=onCleanup(@()fclose(fid));
+            fprintf(fid,'%s\n',header);
+            clear c;
+            if strcmp(mode,'sim')
+                obj.ExperimentLogs(i).sim_file=path;
+                obj.ExperimentLogs(i).sim_start=posixtime(datetime('now','TimeZone','UTC'));
+                obj.ExperimentLogs(i).sim_active=true;
+                obj.ExperimentLogs(i).sim_count=0;
+                obj.ExperimentLogs(i).sim_events={};
+                obj.ExperimentLogs(i).sim_reached_count=0;
+                obj.ExperimentLogs(i).sim_reached=false;
+                obj.ExperimentLogs(i).sim_close_after_tick=false;
+                obj.ExperimentLogs(i).sim_last_epoch=NaN;
+            else
+                obj.ExperimentLogs(i).live_file=path;
+                obj.ExperimentLogs(i).live_start=posixtime(datetime('now','TimeZone','UTC'));
+                obj.ExperimentLogs(i).live_active=true;
+                obj.ExperimentLogs(i).live_count=0;
+                obj.ExperimentLogs(i).live_events={};
+                obj.ExperimentLogs(i).live_reached_count=0;
+                obj.ExperimentLogs(i).live_reached=false;
+                obj.ExperimentLogs(i).live_close_after_tick=false;
+                obj.ExperimentLogs(i).live_last_epoch=NaN;
+                obj.ExperimentLogs(i).last_live_input_valid=NaN;
+            end
+            latest=fullfile(obj.Runtime,sprintf('station%d_%s_latest.txt',i,mode));
+            fid=fopen(latest,'w');
+            if fid<0,error('Cannot write latest-experiment reference: %s',latest);end
+            c=onCleanup(@()fclose(fid));
+            fprintf(fid,'%s\n',filename);
+            clear c;
+            obj.queueLogEvent(i,mode,sprintf('%s experiment started',mode));
+        end
+
+        function recordExperimentSamples(obj)
+            % Runs from MATLAB's loop, independently of student browsers/Python.
+            % Open/append/close every sample to preserve previous records on a crash.
+            epoch=posixtime(datetime('now','TimeZone','UTC'));
+            stamp=datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+            for j=1:4
+                for which=1:2
+                    if which==1,mode='sim';else,mode='live';end
+                    obj.appendExperimentSample(j,mode,epoch,stamp);
+                end
+            end
+        end
+
+        function appendExperimentSample(obj,i,mode,epoch,stamp)
+            s=obj.S(i);
+            log=obj.ExperimentLogs(i);
+            if strcmp(mode,'sim')
+                if ~log.sim_active,return;end
+                elapsed=max(0,epoch-log.sim_start);
+                if isfinite(log.sim_last_epoch) && epoch-log.sim_last_epoch>2.5
+                    obj.queueLogEvent(i,'sim',sprintf('Sampling interval gap: %.2f s',epoch-log.sim_last_epoch));
+                end
+                obj.ExperimentLogs(i).sim_last_epoch=epoch;
+                number=log.sim_count+1;
+                obj.ExperimentLogs(i).sim_count=number;
+                temp=s.sim_temp;
+                if s.sim_running, obj.checkSetpointMilestone(i,'sim',temp,s.setpoint);end
+                vals=[number max(1,round(elapsed)) elapsed epoch temp s.setpoint s.kp s.ki s.kd ...
+                    s.sim_duty s.sim_p s.sim_i s.sim_d s.gain s.tau s.deadtime ...
+                    s.cool_disturbance double(s.sim_running)];
+                path=log.sim_file;
+                events=obj.ExperimentLogs(i).sim_events;
+            else
+                if ~log.live_active,return;end
+                elapsed=max(0,epoch-log.live_start);
+                if isfinite(log.live_last_epoch) && epoch-log.live_last_epoch>2.5
+                    obj.queueLogEvent(i,'live',sprintf('Sampling interval gap: %.2f s',epoch-log.live_last_epoch));
+                end
+                obj.ExperimentLogs(i).live_last_epoch=epoch;
+                number=log.live_count+1;
+                obj.ExperimentLogs(i).live_count=number;
+                temp=s.measured_c;
+                if ~isnan(log.last_live_input_valid) && logical(log.last_live_input_valid)~=logical(s.live_ok)
+                    if s.live_ok
+                        obj.queueLogEvent(i,'live','Temperature input restored');
+                    else
+                        obj.queueLogEvent(i,'live','Temperature input invalid or disconnected');
+                    end
+                end
+                obj.ExperimentLogs(i).last_live_input_valid=double(s.live_ok);
+                if s.live_running && s.live_ok
+                    obj.checkSetpointMilestone(i,'live',temp,s.setpoint);
+                end
+                vals=[number max(1,round(elapsed)) elapsed epoch temp s.setpoint s.kp s.ki s.kd ...
+                    s.live_duty s.live_p s.live_i s.live_d s.current_ma double(s.live_ok) ...
+                    double(s.do_request) s.do_readback double(obj.OutputArmed(i)) double(s.live_running)];
+                path=log.live_file;
+                events=obj.ExperimentLogs(i).live_events;
+            end
+            % Preserve fractional real elapsed time AND whole-second representation.
+            % Sample is always 1,2,3,...; Elapsed_s can skip/repeat during timer jitter.
+            front=sprintf('%.12g,',vals(1:3));
+            back=sprintf('%.16g,',vals(4:end));
+            events=strjoin(events,'; ');
+            events=strrep(events,'"','""');
+            fid=fopen(path,'a');
+            if fid<0,error('Cannot append experiment log: %s',path);end
+            c=onCleanup(@()fclose(fid));
+            fprintf(fid,'%s"%s",%s"%s"\n',front,stamp,back,events);
+            clear c;
+            if strcmp(mode,'sim')
+                obj.ExperimentLogs(i).sim_events={};
+                if obj.ExperimentLogs(i).sim_close_after_tick
+                    obj.ExperimentLogs(i).sim_active=false;
+                    obj.ExperimentLogs(i).sim_close_after_tick=false;
+                end
+            else
+                obj.ExperimentLogs(i).live_events={};
+                if obj.ExperimentLogs(i).live_close_after_tick
+                    obj.ExperimentLogs(i).live_active=false;
+                    obj.ExperimentLogs(i).live_close_after_tick=false;
+                end
+            end
+        end
+
+        function checkSetpointMilestone(obj,i,mode,temp,sp)
+            if ~isfinite(temp) || ~isfinite(sp),return;end
+            within=abs(temp-sp)<=0.5;
+            if strcmp(mode,'sim')
+                if within
+                    obj.ExperimentLogs(i).sim_reached_count=obj.ExperimentLogs(i).sim_reached_count+1;
+                    if obj.ExperimentLogs(i).sim_reached_count>=5 && ~obj.ExperimentLogs(i).sim_reached
+                        obj.queueLogEvent(i,'sim',sprintf('Setpoint reached within +/-0.5 C: %.2f C',sp));
+                        obj.ExperimentLogs(i).sim_reached=true;
+                    end
+                else
+                    obj.ExperimentLogs(i).sim_reached_count=0;
+                    obj.ExperimentLogs(i).sim_reached=false;
+                end
+            else
+                if within
+                    obj.ExperimentLogs(i).live_reached_count=obj.ExperimentLogs(i).live_reached_count+1;
+                    if obj.ExperimentLogs(i).live_reached_count>=5 && ~obj.ExperimentLogs(i).live_reached
+                        obj.queueLogEvent(i,'live',sprintf('Setpoint reached within +/-0.5 C: %.2f C',sp));
+                        obj.ExperimentLogs(i).live_reached=true;
+                    end
+                else
+                    obj.ExperimentLogs(i).live_reached_count=0;
+                    obj.ExperimentLogs(i).live_reached=false;
+                end
             end
         end
 
